@@ -139,7 +139,7 @@ const App: React.FC = () => {
               color: 'lightgray',
               marginTop: '30px',
               fontWeight: 600
-            }}>MIS AFIRMACIONES</IonTitle>
+            }}></IonTitle>
           </IonToolbar>
         </IonHeader>
 
