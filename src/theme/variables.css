@@ -3,7 +3,7 @@ http://ionicframework.com/docs/theming/ */
 @import 'leaflet/dist/leaflet.css';
 
 :root {
-    --ion-color-primary: #d2b48c;
+    --ion-color-primary: white;
     /* Habano clarito */
     --ion-color-primary-rgb: 210, 180, 140;
     --ion-color-primary-contrast: #000000;
@@ -11,8 +11,20 @@ http://ionicframework.com/docs/theming/ */
     --ion-color-primary-shade: #b89c78;
     --ion-color-primary-tint: #d8bfa0;
 
-    --ion-background-color: #f5e6d0;
+    --ion-background-color: rgba(69, 82, 105, 0.736);
     /* Color de fondo habano clarito */
     --ion-text-color: #5a4a3b;
     /* Color del texto */
 }
+
+body {
+    font-family: 'Roboto Condensed', sans-serif;
+  }
+  
+
+  /* En tu CSS */
+.container {
+    max-width: 600px;
+    margin: 0 auto;
+    padding: 20px;
+  }
