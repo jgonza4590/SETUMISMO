@@ -10,6 +10,15 @@ type Category = string;
 type Phrase = { text: string };
 type PhrasesData = Record<Category, Phrase[]>;
 
+const shuffleArray = (array: string[]) => {
+  const shuffled = [...array];
+  for (let i = shuffled.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+  }
+  return shuffled;
+};
+
 const getRandomColorPair = () => {
   const hue = Math.floor(Math.random() * 360);
   const variations = [
@@ -38,10 +47,11 @@ const getRandomColorPair = () => {
 };
 
 const App: React.FC = () => {
-  const [category, setCategory] = useState<Category>("ORDEN");
+  const [category, setCategory] = useState<Category>("");
   const [currentPhrase, setCurrentPhrase] = useState<string>("");
   const [colors, setColors] = useState(getRandomColorPair());
   const [phrasesData, setPhrasesData] = useState<PhrasesData | null>(null);
+  const [shuffledCategories, setShuffledCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -56,7 +66,7 @@ const App: React.FC = () => {
           skipEmptyLines: true,
         });
 
-        const groupedData = parsed.data.reduce((acc: PhrasesData, row) => {
+        const groupedData = parsed.data.reduce((acc: PhrasesData, row: { category: string; text: string }) => {
           const cat = row.category?.toUpperCase()?.trim();
           const text = row.text?.trim();
           if (cat && text) {
@@ -64,16 +74,21 @@ const App: React.FC = () => {
             acc[cat].push({ text });
           }
           return acc;
-        }, {});
+        }, {} as PhrasesData);
 
+        const categories = Object.keys(groupedData);
+        const shuffled = shuffleArray(categories);
+        
         setPhrasesData(groupedData);
+        setShuffledCategories(shuffled);
         setLoading(false);
 
-        if (groupedData[category]) {
-          setCurrentPhrase(getRandomPhrase(groupedData[category]));
+        if (shuffled.length > 0) {
+          const initialCategory = shuffled[0];
+          setCategory(initialCategory);
+          setCurrentPhrase(getRandomPhrase(groupedData[initialCategory]));
         }
 
-        // Schedule notifications
         const permission = await LocalNotifications.requestPermissions();
         if (permission.display === 'granted') {
           await LocalNotifications.schedule({
@@ -152,7 +167,7 @@ const App: React.FC = () => {
                   textAlign: 'center'
                 }}
               >
-                {Object.keys(phrasesData).map((cat) => (
+                {shuffledCategories.map((cat) => (
                   <IonSelectOption key={cat} value={cat}>
                     {cat.charAt(0).toUpperCase() + cat.slice(1).toLowerCase()}
                   </IonSelectOption>
