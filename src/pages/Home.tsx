@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { IonApp, IonPage, IonHeader, IonToolbar, IonTitle, IonContent, IonButton, IonSelect, IonSelectOption } from '@ionic/react';
+import { IonApp, IonPage, IonContent, IonButton, IonSelect, IonSelectOption } from '@ionic/react';
 import { MdRefresh } from "react-icons/md";
 import { LocalNotifications } from '@capacitor/local-notifications';
 import axios from 'axios';
@@ -10,7 +10,7 @@ type Category = string;
 type Phrase = { text: string };
 type PhrasesData = Record<Category, Phrase[]>;
 
-const shuffleArray = (array: string[]) => {
+const shuffleArray = <T,>(array: T[]): T[] => {
   const shuffled = [...array];
   for (let i = shuffled.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
@@ -53,6 +53,7 @@ const App: React.FC = () => {
   const [phrasesData, setPhrasesData] = useState<PhrasesData | null>(null);
   const [shuffledCategories, setShuffledCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
   useEffect(() => {
     const fetchPhrases = async () => {
@@ -66,15 +67,15 @@ const App: React.FC = () => {
           skipEmptyLines: true,
         });
 
-        const groupedData = parsed.data.reduce((acc: PhrasesData, row: { category: string; text: string }) => {
-          const cat = row.category?.toUpperCase()?.trim();
+        const groupedData = parsed.data.reduce((acc: PhrasesData, row) => {
+          const cat = row.category?.trim().toUpperCase();
           const text = row.text?.trim();
           if (cat && text) {
             if (!acc[cat]) acc[cat] = [];
             acc[cat].push({ text });
           }
           return acc;
-        }, {} as PhrasesData);
+        }, {});
 
         const categories = Object.keys(groupedData);
         const shuffled = shuffleArray(categories);
@@ -94,14 +95,19 @@ const App: React.FC = () => {
           await LocalNotifications.schedule({
             notifications: [{
               id: 1,
-              title: "Holi 💡",
-              body: ":) " + (groupedData["ORDEN"]?.[0]?.text || "Positive affirmation"),
-              schedule: { repeats: true, every: "day", at: new Date(Date.now() + 1000 * 60 * 60) },
+              title: "Daily Affirmation 🌟",
+              body: groupedData["ORDEN"]?.[0]?.text || "Start your day with positivity!",
+              schedule: { 
+                repeats: true,
+                every: "day",
+                at: new Date(new Date().setHours(9, 0, 0, 0))
+              },
             }]
           });
         }
-      } catch (error) {
-        console.error("Error loading phrases:", error);
+      } catch (err) {
+        console.error("Error loading phrases:", err);
+        setError("Error loading data. Please try again.");
         setLoading(false);
       }
     };
@@ -109,83 +115,146 @@ const App: React.FC = () => {
     fetchPhrases();
   }, []);
 
-  const getRandomPhrase = (phrases: Phrase[]) => 
-    phrases[Math.floor(Math.random() * phrases.length)]?.text || "";
-
-  const updateColors = () => {
-    setColors(getRandomColorPair());
+  const getRandomPhrase = (phrases: Phrase[]) => {
+    if (!phrases?.length) return "";
+    return phrases[Math.floor(Math.random() * phrases.length)].text;
   };
 
   const handleCategoryChange = (newCategory: Category) => {
+    if (!phrasesData?.[newCategory]?.length) return;
+    
     setCategory(newCategory);
-    if (phrasesData && phrasesData[newCategory]) {
-      setCurrentPhrase(getRandomPhrase(phrasesData[newCategory]));
-      updateColors();
-    }
+    setCurrentPhrase(getRandomPhrase(phrasesData[newCategory]));
+    setColors(getRandomColorPair());
   };
 
   const refreshPhrase = () => {
-    if (!phrasesData || !phrasesData[category]) return;
+    if (!phrasesData?.[category]?.length) return;
     setCurrentPhrase(getRandomPhrase(phrasesData[category]));
-    updateColors();
+    setColors(getRandomColorPair());
+  };
+
+  const retryFetch = () => {
+    setError("");
+    setLoading(true);
+    fetchPhrases();
   };
 
   return (
     <IonApp>
       <IonPage>
-
-        <IonContent className="ion-padding" style={{ 
-          display: 'flex', 
-          flexDirection: 'column', 
-          justifyContent: 'center', 
-          height: '100vh' 
-        }}>
-          {loading ? (
-            <div style={{ textAlign: 'center', color: 'gray' }}>
-              Cargando afirmaciones...
+        <IonContent
+          style={{ 
+            backgroundColor: colors.bgColor,
+            color: colors.textColor,
+            transition: 'all 0.6s cubic-bezier(0.4, 0, 0.2, 1)',
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: 'center',
+            height: '100vh',
+            '--ion-text-color': colors.textColor,
+            padding: '1rem'
+          }}
+        >
+          {error ? (
+            <div style={{ 
+              textAlign: 'center',
+              padding: '2rem',
+              borderRadius: '16px',
+              backgroundColor: `${colors.textColor}15`,
+              backdropFilter: 'blur(12px)',
+              border: `1px solid ${colors.textColor}20`,
+              margin: '1rem',
+              boxShadow: `0 4px 24px ${colors.textColor}15`
+            }}>
+              <p style={{ margin: '0 0 1.5rem' }}>{error}</p>
+              <IonButton 
+                onClick={retryFetch}
+                style={{
+                  '--background': `${colors.textColor}20`,
+                  '--color': colors.textColor,
+                  '--border-radius': '8px',
+                  backdropFilter: 'blur(8px)'
+                }}
+              >
+                Try Again
+              </IonButton>
             </div>
-          ) : phrasesData ? (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
+          ) : loading ? (
+            <div style={{ 
+              textAlign: 'center',
+              padding: '2rem',
+              borderRadius: '16px',
+              backgroundColor: `${colors.textColor}10`,
+              backdropFilter: 'blur(8px)',
+              border: `1px solid ${colors.textColor}15`,
+              margin: '1rem',
+              boxShadow: `0 4px 24px ${colors.textColor}10`
+            }}>
+              Loading Affirmations...
+            </div>
+          ) : (
+            <div style={{ 
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '2rem',
+              maxWidth: '800px',
+              margin: '0 auto',
+              padding: '1rem'
+            }}>
               <IonSelect
                 value={category}
                 onIonChange={e => handleCategoryChange(e.detail.value)}
                 interface="popover"
                 style={{
-                  maxWidth: '300px',
-                  backgroundColor: '#455269bc',
-                  borderRadius: '8px',
+                  width: '100%',
+                  maxWidth: '400px',
                   margin: '0 auto',
-                  textAlign: 'center'
+                  borderRadius: '12px',
+                  backgroundColor: `${colors.bgColor}30`,
+                  backdropFilter: 'blur(12px)',
+                  border: `1px solid ${colors.textColor}20`,
+                  boxShadow: `0 4px 24px ${colors.textColor}10`,
+                  transition: 'inherit'
                 }}
               >
                 {shuffledCategories.map((cat) => (
-                  <IonSelectOption key={cat} value={cat}>
+                  <IonSelectOption 
+                    key={cat} 
+                    value={cat}
+                    style={{
+                      backgroundColor: `${colors.textColor}10`,
+                      margin: '4px',
+                      borderRadius: '8px',
+                      transition: 'inherit'
+                    }}
+                  >
                     {cat.charAt(0).toUpperCase() + cat.slice(1).toLowerCase()}
                   </IonSelectOption>
                 ))}
               </IonSelect>
 
               <div style={{
-                minHeight: '450px',
-                margin: '0 20px',
-                padding: '25px',
-                backgroundColor: colors.bgColor,
-                borderRadius: '20px',
-                boxShadow: `0 8px 32px ${colors.textColor}20`,
-                transition: 'all 0.6s ease',
+                minHeight: '400px',
+                padding: '2.5rem',
+                borderRadius: '24px',
+                backgroundColor: `${colors.bgColor}50`,
+                backdropFilter: 'blur(16px)',
+                border: `1px solid ${colors.textColor}20`,
+                boxShadow: `0 8px 48px ${colors.textColor}15`,
                 display: 'flex',
                 justifyContent: 'center',
                 alignItems: 'center',
-                textAlign: 'center'
+                transition: 'inherit'
               }}>
                 <h1 style={{
-                  fontSize: '2rem',
+                  fontSize: 'clamp(1.5rem, 4vw, 2.5rem)',
                   lineHeight: '1.4',
-                  color: colors.textColor,
                   margin: 0,
                   fontWeight: 600,
                   fontFamily: 'system-ui',
-                  textShadow: `0 2px 4px ${colors.textColor}10`
+                  textShadow: `0 2px 8px ${colors.textColor}25`,
+                  transition: 'inherit'
                 }}>
                   {currentPhrase.toUpperCase()}
                 </h1>
@@ -194,18 +263,23 @@ const App: React.FC = () => {
               <IonButton
                 onClick={refreshPhrase}
                 style={{
-                  maxWidth: '300px',
+                  width: '100%',
+                  maxWidth: '200px',
                   margin: '0 auto',
-                  '--background': '#515d75',
-                  '--border-radius': '12px'
+                  '--background': `${colors.textColor}15`,
+                  '--color': colors.textColor,
+                  '--border-radius': '12px',
+                  backdropFilter: 'blur(8px)',
+                  border: `1px solid ${colors.textColor}20`,
+                  boxShadow: `0 4px 24px ${colors.textColor}10`,
+                  transition: 'inherit'
                 }}
               >
-                <MdRefresh style={{ fontSize: '1.5rem' }} />
+                <MdRefresh style={{ 
+                  fontSize: '1.75rem',
+                  filter: `drop-shadow(0 2px 2px ${colors.textColor}30)`
+                }} />
               </IonButton>
-            </div>
-          ) : (
-            <div style={{ textAlign: 'center', color: 'red' }}>
-              Error cargando datos. Por favor intenta nuevamente.
             </div>
           )}
         </IonContent>
