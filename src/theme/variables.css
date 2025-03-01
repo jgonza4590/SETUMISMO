@@ -3,17 +3,16 @@ http://ionicframework.com/docs/theming/ */
 @import 'leaflet/dist/leaflet.css';
 
 :root {
-    --ion-color-primary: white;
+    --ion-color-primary: #455269;
     /* Habano clarito */
     --ion-color-primary-rgb: 210, 180, 140;
-    --ion-color-primary-contrast: #000000;
+    --ion-color-primary-contrast: #797b7f;
     --ion-color-primary-contrast-rgb: 0, 0, 0;
     --ion-color-primary-shade: #b89c78;
     --ion-color-primary-tint: #d8bfa0;
 
-    --ion-background-color: rgba(69, 82, 105, 0.736);
-    /* Color de fondo habano clarito */
-    --ion-text-color: #5a4a3b;
+    --ion-background-color: #455269;
+    --ion-text-color: #847e7e;
     /* Color del texto */
 }
 

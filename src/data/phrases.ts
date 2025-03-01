@@ -100,3 +100,6 @@ export const phrases = [
   { text: "¿Por qué soy una persona organizada y disfruto de los resultados?" },
   { text: "¿Por qué cada día elijo el orden como camino hacia mi éxito y bienestar?" }
 ];
+
+
+https://docs.google.com/spreadsheets/d/1bnVyeB7JjPvfQ_IX74LeQ6mnBOEHaIJjkLfFU9Dyeck/edit?usp=sharing
