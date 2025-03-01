@@ -102,4 +102,4 @@ export const phrases = [
 ];
 
 
-https://docs.google.com/spreadsheets/d/1bnVyeB7JjPvfQ_IX74LeQ6mnBOEHaIJjkLfFU9Dyeck/edit?usp=sharing
+// https://docs.google.com/spreadsheets/d/1bnVyeB7JjPvfQ_IX74LeQ6mnBOEHaIJjkLfFU9Dyeck/edit?usp=sharing
