@@ -133,15 +133,6 @@ const App: React.FC = () => {
   return (
     <IonApp>
       <IonPage>
-        <IonHeader>
-          <IonToolbar>
-            <IonTitle className="ion-text-center" style={{
-              color: 'lightgray',
-              marginTop: '30px',
-              fontWeight: 600
-            }}></IonTitle>
-          </IonToolbar>
-        </IonHeader>
 
         <IonContent className="ion-padding" style={{ 
           display: 'flex', 
