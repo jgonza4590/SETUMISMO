@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { IonApp, IonPage, IonContent, IonButton, IonSelect, IonSelectOption } from '@ionic/react';
-import { MdRefresh, MdShuffle } from "react-icons/md";
+import { IonApp, IonPage, IonContent, IonButton, IonSelect, IonSelectOption, IonToggle, IonLabel, isPlatform } from '@ionic/react';
+import { MdRefresh } from "react-icons/md";
 import { LocalNotifications } from '@capacitor/local-notifications';
 import axios from 'axios';
 import Papa from 'papaparse';
@@ -54,6 +54,49 @@ const App: React.FC = () => {
   const [shuffledCategories, setShuffledCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [randomMode, setRandomMode] = useState(false);
+
+  // Configurar canal de notificaciones
+  useEffect(() => {
+    const setupNotificationChannels = async () => {
+      await LocalNotifications.createChannel({
+        id: 'affirmations_channel',
+        name: 'Afirmaciones',
+        description: 'Notificaciones de afirmaciones diarias',
+        importance: 4,
+        visibility: 1,
+        vibration: true,
+        lights: true,
+        ...(isPlatform('android') && {
+          style: {
+            type: 'media'
+          }
+        })
+      });
+    };
+    
+    setupNotificationChannels();
+  }, []);
+
+  const scheduleSpotifyLikeNotification = async (phrase: string, schedule?: any) => {
+    const permission = await LocalNotifications.requestPermissions();
+    
+    if (permission.display === 'granted') {
+      await LocalNotifications.schedule({
+        notifications: [{
+          id: Date.now(),
+          title: "🌟 Nueva Afirmación",
+          body: phrase,
+          summaryText: "Toca para más detalles",
+          largeBody: `${phrase}\n\n✨ Mantén tu motivación alta!`,
+          extra: { phrase },
+          channelId: 'affirmations_channel',
+          threadIdentifier: 'daily-affirmations',
+          schedule
+        }]
+      });
+    }
+  };
 
   useEffect(() => {
     const fetchPhrases = async () => {
@@ -86,23 +129,15 @@ const App: React.FC = () => {
 
         if (shuffled.length > 0) {
           const initialCategory = shuffled[0];
+          const initialPhrase = getRandomPhrase(groupedData[initialCategory]);
           setCategory(initialCategory);
-          setCurrentPhrase(getRandomPhrase(groupedData[initialCategory]));
-        }
-
-        const permission = await LocalNotifications.requestPermissions();
-        if (permission.display === 'granted') {
-          await LocalNotifications.schedule({
-            notifications: [{
-              id: 1,
-              title: "Daily Affirmation 🌟",
-              body: groupedData["ORDEN"]?.[0]?.text || "Start your day with positivity!",
-              schedule: { 
-                repeats: true,
-                every: "day",
-                at: new Date(new Date().setHours(9, 0, 0, 0))
-              },
-            }]
+          setCurrentPhrase(initialPhrase);
+          
+          // Programar notificación diaria
+          scheduleSpotifyLikeNotification(initialPhrase, {
+            repeats: true,
+            every: "day",
+            at: new Date(new Date().setHours(9, 0, 0, 0))
           });
         }
       } catch (err) {
@@ -116,35 +151,39 @@ const App: React.FC = () => {
   }, []);
 
   const getRandomPhrase = (phrases: Phrase[]) => {
-    if (!phrases?.length) return "";
-    return phrases[Math.floor(Math.random() * phrases.length)].text;
+    return phrases?.[Math.floor(Math.random() * phrases.length)]?.text || "";
   };
 
   const handleCategoryChange = (newCategory: Category) => {
-    if (!phrasesData?.[newCategory]?.length) return;
+    if (!phrasesData?.[newCategory]) return;
     
+    const newPhrase = getRandomPhrase(phrasesData[newCategory]);
     setCategory(newCategory);
-    setCurrentPhrase(getRandomPhrase(phrasesData[newCategory]));
+    setCurrentPhrase(newPhrase);
     setColors(getRandomColorPair());
   };
 
   const refreshPhrase = () => {
-    if (!phrasesData?.[category]?.length) return;
-    setCurrentPhrase(getRandomPhrase(phrasesData[category]));
-    setColors(getRandomColorPair());
-  };
-
-  const shuffleCategory = () => {
-    if (!shuffledCategories.length) return;
-    const randomIndex = Math.floor(Math.random() * shuffledCategories.length);
-    const randomCategory = shuffledCategories[randomIndex];
-    handleCategoryChange(randomCategory);
+    if (!phrasesData) return;
+    
+    let newPhrase = "";
+    if (randomMode) {
+      const randomCategory = shuffledCategories[Math.floor(Math.random() * shuffledCategories.length)];
+      newPhrase = getRandomPhrase(phrasesData[randomCategory]);
+      setCategory(randomCategory);
+    } else {
+      newPhrase = getRandomPhrase(phrasesData[category]);
+    }
+    
+    if (newPhrase) {
+      setCurrentPhrase(newPhrase);
+      setColors(getRandomColorPair());
+    }
   };
 
   const retryFetch = () => {
     setError("");
     setLoading(true);
-//    fetchPhrases();
   };
 
   return (
@@ -211,57 +250,55 @@ const App: React.FC = () => {
               padding: '1rem'
             }}>
               
-              <div style={{display: 'flex', gap: '1rem'}}>
-              <IonSelect
-                value={category}
-                onIonChange={e => handleCategoryChange(e.detail.value)}
-                interface="popover"
-                style={{
-                  width: '100%',
-                  maxWidth: '400px',
-                  margin: '0 auto',
+              <div style={{
+                display: 'flex', 
+                alignItems: 'center',
+                justifyContent: 'space-between'
+              }}>
+                <IonSelect
+                  value={category}
+                  onIonChange={e => handleCategoryChange(e.detail.value)}
+                  interface="popover"
+                >
+                  {shuffledCategories.map((cat) => (
+                    <IonSelectOption 
+                      key={cat} 
+                      value={cat}
+                      style={{
+                        backgroundColor: `${colors.textColor}`,
+                        margin: '4px',
+                        borderRadius: '8px',
+                        transition: 'inherit'
+                      }}
+                    >
+                      {cat.charAt(0).toUpperCase() + cat.slice(1).toLowerCase()}
+                    </IonSelectOption>
+                  ))}
+                </IonSelect>
+                
+                <div style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.5rem',
+                  padding: '0.5rem',
                   borderRadius: '12px',
-                  backgroundColor: `${colors.bgColor}30`,
-                  backdropFilter: 'blur(12px)',
+                  backgroundColor: `${colors.textColor}15`,
+                  backdropFilter: 'blur(8px)',
                   border: `1px solid ${colors.textColor}20`,
-                  boxShadow: `0 4px 24px ${colors.textColor}10`,
-                  transition: 'inherit'
-                }}
-              >
-                {shuffledCategories.map((cat) => (
-                  <IonSelectOption 
-                    key={cat} 
-                    value={cat}
+                  boxShadow: `0 4px 24px ${colors.textColor}10`
+                }}>
+                  <IonLabel style={{ fontSize: '0.85rem' }}></IonLabel>
+                  <IonToggle 
+                    checked={randomMode}
+                    onIonChange={e => setRandomMode(e.detail.checked)}
                     style={{
-                      backgroundColor: `${colors.textColor}10`,
-                      margin: '4px',
-                      borderRadius: '8px',
-                      transition: 'inherit'
+                      '--handle-background-checked': colors.textColor,
+                      '--background-checked': `${colors.textColor}30`,
+                      '--background': `${colors.textColor}15`
                     }}
-                  >
-                    {cat.charAt(0).toUpperCase() + cat.slice(1).toLowerCase()}
-                  </IonSelectOption>
-                ))}
-              </IonSelect>
-              <IonButton
-              onClick={shuffleCategory}
-              style={{
-                '--background': `${colors.textColor}15`,
-                '--color': colors.textColor,
-                '--border-radius': '12px',
-                backdropFilter: 'blur(8px)',
-                border: `1px solid ${colors.textColor}20`,
-                boxShadow: `0 4px 24px ${colors.textColor}10`,
-                transition: 'inherit',
-                marginLeft: 'auto'
-              }}
-            >
-              <MdShuffle style={{ 
-                fontSize: '1.5rem',
-                filter: `drop-shadow(0 2px 2px ${colors.textColor}30)`
-              }} />
-            </IonButton>
-            </div>
+                  />
+                </div>
+              </div>
 
               <div style={{
                 minHeight: '400px',
