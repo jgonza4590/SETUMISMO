@@ -10,6 +10,9 @@ const App: React.FC = () => (
   <IonApp style={{ backgroundColor: 'var(--ion-background-color)' }}>
     <IonReactRouter>
       <IonRouterOutlet>
+        <Route exact path="/home">
+          <Home />
+        </Route>
         <Route exact path="/">
           <Home />
         </Route>

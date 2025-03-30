@@ -137,7 +137,7 @@ const App: React.FC = () => {
   const retryFetch = () => {
     setError("");
     setLoading(true);
-    fetchPhrases();
+//    fetchPhrases();
   };
 
   return (

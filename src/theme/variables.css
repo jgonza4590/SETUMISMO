@@ -11,14 +11,21 @@ http://ionicframework.com/docs/theming/ */
     --ion-color-primary-shade: #b89c78;
     --ion-color-primary-tint: #d8bfa0;
 
-    --ion-background-color: #455269;
+    --ion-background-color: colors.bgColor;
     --ion-text-color: #847e7e;
     /* Color del texto */
 }
 
 body {
-    font-family: 'Roboto Condensed', sans-serif;
+    font-family: 'Pacifico', 'Pacifico';
   }
+
+  .pacifico-regular {
+    font-family: "Pacifico", serif;
+    font-weight: 400;
+    font-style: normal;
+  }
+  
   
 
   /* En tu CSS */
