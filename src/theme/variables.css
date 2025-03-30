@@ -17,16 +17,14 @@ http://ionicframework.com/docs/theming/ */
 }
 
 body {
-    font-family: 'Pacifico', 'Pacifico';
+    font-family: 'Lexend Deca', 'Lexend Deca';
   }
 
   .pacifico-regular {
-    font-family: "Pacifico", serif;
+    font-family: "Lexend Deca";
     font-weight: 400;
     font-style: normal;
   }
-  
-  
 
   /* En tu CSS */
 .container {

@@ -148,6 +148,7 @@ const App: React.FC = () => {
             backgroundColor: colors.bgColor,
             color: colors.textColor,
             transition: 'all 0.6s cubic-bezier(0.4, 0, 0.2, 1)',
+            fontFamily: "'Lexend Deca', sans-serif",
             display: 'flex',
             flexDirection: 'column',
             justifyContent: 'center',
