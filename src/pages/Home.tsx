@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { IonApp, IonPage, IonContent, IonButton, IonSelect, IonSelectOption } from '@ionic/react';
-import { MdRefresh } from "react-icons/md";
+import { MdRefresh, MdShuffle } from "react-icons/md";
 import { LocalNotifications } from '@capacitor/local-notifications';
 import axios from 'axios';
 import Papa from 'papaparse';
@@ -134,6 +134,13 @@ const App: React.FC = () => {
     setColors(getRandomColorPair());
   };
 
+  const shuffleCategory = () => {
+    if (!shuffledCategories.length) return;
+    const randomIndex = Math.floor(Math.random() * shuffledCategories.length);
+    const randomCategory = shuffledCategories[randomIndex];
+    handleCategoryChange(randomCategory);
+  };
+
   const retryFetch = () => {
     setError("");
     setLoading(true);
@@ -203,6 +210,8 @@ const App: React.FC = () => {
               margin: '0 auto',
               padding: '1rem'
             }}>
+              
+              <div style={{display: 'flex', gap: '1rem'}}>
               <IonSelect
                 value={category}
                 onIonChange={e => handleCategoryChange(e.detail.value)}
@@ -234,6 +243,25 @@ const App: React.FC = () => {
                   </IonSelectOption>
                 ))}
               </IonSelect>
+              <IonButton
+              onClick={shuffleCategory}
+              style={{
+                '--background': `${colors.textColor}15`,
+                '--color': colors.textColor,
+                '--border-radius': '12px',
+                backdropFilter: 'blur(8px)',
+                border: `1px solid ${colors.textColor}20`,
+                boxShadow: `0 4px 24px ${colors.textColor}10`,
+                transition: 'inherit',
+                marginLeft: 'auto'
+              }}
+            >
+              <MdShuffle style={{ 
+                fontSize: '1.5rem',
+                filter: `drop-shadow(0 2px 2px ${colors.textColor}30)`
+              }} />
+            </IonButton>
+            </div>
 
               <div style={{
                 minHeight: '400px',
